@@ -98,6 +98,7 @@ module ChildProcess
     #
     # Wait for the process to exit, raising a ChildProcess::TimeoutError if
     # the timeout expires.
+    # @return [Integer] the exit code
     #
 
     def poll_for_exit(timeout)
@@ -111,6 +112,8 @@ module ChildProcess
       unless ok
         raise TimeoutError, "process still alive after #{timeout} seconds"
       end
+
+      return exit_code
     end
 
     private

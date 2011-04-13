@@ -1,9 +1,6 @@
 require File.expand_path('../spec_helper', __FILE__)
 
 describe ChildProcess do
-
-  EXIT_TIMEOUT = 10
-
   it "returns self when started" do
     process = sleeping_ruby
 
@@ -13,14 +10,14 @@ describe ChildProcess do
 
   it "knows if the process crashed" do
     process = exit_with(1).start
-    process.poll_for_exit(EXIT_TIMEOUT)
+    wait_on_process()
 
     process.should be_crashed
   end
 
   it "knows if the process didn't crash" do
     process = exit_with(0).start
-    process.poll_for_exit(EXIT_TIMEOUT)
+    wait_on_process
 
     process.should_not be_crashed
   end
@@ -40,7 +37,7 @@ describe ChildProcess do
     Tempfile.open("env-spec") do |file|
       with_env('INHERITED' => 'yes') do
         process = write_env(file.path).start
-        process.poll_for_exit(EXIT_TIMEOUT)
+        wait_on_process
       end
 
       file.rewind
@@ -54,7 +51,7 @@ describe ChildProcess do
 
     Tempfile.open("argv-spec") do |file|
       process = write_argv(file.path, *args).start
-      process.poll_for_exit(EXIT_TIMEOUT)
+      wait_on_process
 
       file.rewind
       file.read.should == args.inspect
@@ -84,7 +81,7 @@ describe ChildProcess do
 
       process.start
       process.io.stdin.should be_nil
-      process.poll_for_exit(EXIT_TIMEOUT)
+      wait_on_process
 
       out.rewind
       err.rewind
@@ -113,7 +110,7 @@ describe ChildProcess do
       process.io.stdin.puts "hello world"
       process.io.stdin.close # JRuby seems to need this
 
-      process.poll_for_exit(EXIT_TIMEOUT)
+      wait_on_process
 
       out.rewind
       out.read.should == "hello world\n"
@@ -134,6 +131,17 @@ describe ChildProcess do
 
     server.close
     lambda { TCPServer.new("localhost", 4433).close }.should_not raise_error
+  end
+
+  it "knows the process' exit code" do
+    process = exit_with(0).start
+    wait_on_process
+    process.exit_code.should == 0
+  end
+
+  it "returns the exit code from poll_for_exit" do
+    exit_with(1).start
+    wait_on_process().should == 1
   end
 
 end
