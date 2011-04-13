@@ -15,9 +15,9 @@ module ChildProcessSpecHelper
     @process = ChildProcess.build(RUBY , *args)
   end
 
-  # Wait for process to terminate using poll_for_exit
-  def wait_on_process
-    return @process.poll_for_exit(EXIT_TIMEOUT)
+  # Wait on process using poll_for_exit
+  def wait_on_process(timeout=EXIT_TIMEOUT)
+      return @process.poll_for_exit(timeout)
   end
 
   def sleeping_ruby
