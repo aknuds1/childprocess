@@ -144,4 +144,16 @@ describe ChildProcess do
     wait_on_process().should == 1
   end
 
+  it "can handle whitespace and special characters in arguments" do
+    args = ["foo bar", 'foo\bar']
+
+    Tempfile.open("argv-spec") do |file|
+      write_argv(file.path, *args).start
+      wait_on_process()
+
+      file.rewind
+      file.read.should == args.inspect
+    end
+  end
+
 end
