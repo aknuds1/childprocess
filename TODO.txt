@@ -1,0 +1,1 @@
+* Implement pipe support for other platforms than Unix and Windows
