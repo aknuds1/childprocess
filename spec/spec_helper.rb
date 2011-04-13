@@ -8,7 +8,13 @@ require 'socket'
 require 'stringio'
 
 module ChildProcessSpecHelper
+  EXIT_TIMEOUT = 10
   RUBY = defined?(Gem) ? Gem.ruby : 'ruby'
+
+  # Wait on process using poll_for_exit
+  def wait_on_process(timeout=EXIT_TIMEOUT)
+      return @process.poll_for_exit(timeout)
+  end
 
   def ruby_process(*args)
     @process = ChildProcess.build(RUBY , *args)

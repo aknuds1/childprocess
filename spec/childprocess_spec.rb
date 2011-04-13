@@ -2,8 +2,6 @@ require File.expand_path('../spec_helper', __FILE__)
 
 describe ChildProcess do
 
-  EXIT_TIMEOUT = 10
-
   it "returns self when started" do
     process = sleeping_ruby
 
@@ -134,6 +132,13 @@ describe ChildProcess do
 
     server.close
     lambda { TCPServer.new("localhost", 4433).close }.should_not raise_error
+  end
+
+  describe "#poll_for_exit" do
+    it "raises TimeoutError upon timeout" do
+      process = sleeping_ruby.start
+      expect { wait_on_process(0.1) }.to raise_error(ChildProcess::TimeoutError)
+    end
   end
 
 end
