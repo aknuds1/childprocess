@@ -1,9 +1,6 @@
 require File.expand_path('../spec_helper', __FILE__)
 
 describe ChildProcess do
-
-  EXIT_TIMEOUT = 10
-
   it "returns self when started" do
     process = sleeping_ruby
 
@@ -95,6 +92,25 @@ describe ChildProcess do
       out.close
       err.close
     end
+  end
+
+  it "can redirect stdout, stderr to pipes" do
+    process = ruby(<<-CODE)
+      [STDOUT, STDERR].each_with_index do |io, idx|
+        io.sync = true
+        io.puts idx
+      end
+    CODE
+
+    process.io.stdout = :pipe
+    process.io.stderr = :pipe
+    process.start()
+    wait_on_process()
+
+    stdout = process.io.stdout.read()
+    stderr = process.io.stderr.read()
+    stdout.should == "0\n"
+    stderr.should == "1\n"
   end
 
   it "can write to stdin if duplex = true" do

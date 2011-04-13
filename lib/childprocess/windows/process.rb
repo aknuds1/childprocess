@@ -61,6 +61,15 @@ module ChildProcess
           io._stdin = opts[:stdin]
         end
 
+        if not opts[:stdout_pipe].nil?
+          # Define io.stdout as pipe
+          io._stdout = opts[:stdout_pipe]
+        end
+        if not opts[:stderr_pipe].nil?
+          # Define io.stderr as pipe
+          io._stderr = opts[:stderr_pipe]
+        end
+
         self
       end
 
@@ -92,3 +101,5 @@ module ChildProcess
     end # Process
   end # Windows
 end # ChildProcess
+
+# vim: set sts=2 sw=2 et:

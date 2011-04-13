@@ -8,12 +8,16 @@ module ChildProcess
     end
 
     def stderr=(io)
-      check_type io
+      if io != :pipe
+        check_type io
+      end
       @stderr = io
     end
 
     def stdout=(io)
-      check_type io
+      if io != :pipe
+        check_type io
+      end
       @stdout = io
     end
 
@@ -26,6 +30,16 @@ module ChildProcess
       @stdin = io
     end
 
+    def _stdout=(io)
+      check_type io
+      @stdout = io
+    end
+
+    def _stderr=(io)
+      check_type io
+      @stderr = io
+    end
+
     private
 
     def check_type(io)
@@ -34,3 +48,5 @@ module ChildProcess
 
   end
 end
+
+# vim: set sts=2 sw=2 et:
