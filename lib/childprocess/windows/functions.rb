@@ -18,22 +18,33 @@ module ChildProcess
           si[:dwFlags] |= STARTF_USESTDHANDLES
           inherit = true
 
-          si[:hStdOutput] = handle_for(opts[:stdout].fileno) if opts[:stdout]
-          si[:hStdError]  = handle_for(opts[:stderr].fileno) if opts[:stderr]
+          if opts[:stdout]
+            if opts[:stdout] == :pipe
+              read_pipe_out, write_pipe_out = my_create_pipe()
+              si[:hStdOutput] = write_pipe_out
+            else
+              si[:hStdOutput] = handle_for(opts[:stdout].fileno)
+            end
+          else
+            # Explicitly inherit stdout
+            si[:hStdOutput] = handle_for(STDOUT.fileno)
+          end
+          if opts[:stderr]
+            if opts[:stderr] == :pipe
+              read_pipe_err, write_pipe_err = my_create_pipe()
+              si[:hStdError] = write_pipe_err
+            else
+              si[:hStdError] = handle_for(opts[:stderr].fileno)
+            end
+          else
+            # Explicitly inherit stderr
+            si[:hStdError] = handle_for(STDERR.fileno)
+          end
         end
 
         if opts[:duplex]
-          read_pipe_ptr  = FFI::MemoryPointer.new(:pointer)
-          write_pipe_ptr = FFI::MemoryPointer.new(:pointer)
-          sa         = SecurityAttributes.new(:inherit => true)
-
-          ok = create_pipe(read_pipe_ptr, write_pipe_ptr, sa, 0)
-          ok or raise Error, last_error_message
-
-          read_pipe = read_pipe_ptr.read_pointer
-          write_pipe = write_pipe_ptr.read_pointer
-
-          si[:hStdInput] = read_pipe
+          read_pipe_in, write_pipe_in = my_create_pipe()
+          si[:hStdInput] = read_pipe_in
         end
 
         ok = create_process(nil, cmd_ptr, nil, nil, inherit, flags, nil, nil, si, pi)
@@ -43,9 +54,13 @@ module ChildProcess
         close_handle pi[:hThread]
 
         if opts[:duplex]
-          opts[:stdin] = io_for(duplicate_handle(write_pipe), File::WRONLY)
-          close_handle read_pipe
-          close_handle write_pipe
+          opts[:stdin] = pipe2io(write_pipe_in, read_pipe_in, :write)
+        end
+        if not write_pipe_out.nil?
+          opts[:stdout_pipe] = pipe2io(read_pipe_out, write_pipe_out, :read)
+        end
+        if not write_pipe_err.nil?
+          opts[:stderr_pipe] = pipe2io(read_pipe_err, write_pipe_err, :read)
         end
 
         pi[:dwProcessId]
@@ -111,6 +126,28 @@ module ChildProcess
         dup.read_pointer
       ensure
         close_handle proc
+      end
+
+      def self.my_create_pipe
+        read_pipe_ptr = FFI::MemoryPointer.new(:pointer)
+        write_pipe_ptr = FFI::MemoryPointer.new(:pointer)
+        sa = SecurityAttributes.new(:inherit => true)
+        if !create_pipe(read_pipe_ptr, write_pipe_ptr, sa, 0)
+          raise Error, last_error_message
+        end
+
+        read_pipe = read_pipe_ptr.read_pointer
+        write_pipe = write_pipe_ptr.read_pointer
+
+        return read_pipe, write_pipe
+      end
+
+      def self.pipe2io(this_pipe, other_pipe, mode)
+        pipe_io = io_for(duplicate_handle(this_pipe), mode == :read ?
+                         File::RDONLY : File::WRONLY)
+        close_handle this_pipe
+        close_handle other_pipe
+        return pipe_io
       end
 
       #
@@ -282,3 +319,5 @@ module ChildProcess
     end # Lib
   end # Windows
 end # ChildProcess
+
+# vim: set sts=2 sw=2 et:

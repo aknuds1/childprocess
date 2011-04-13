@@ -76,11 +76,26 @@ module ChildProcess
           stderr = @io.stderr
         end
 
+        if stdout == :pipe
+          out_read, out_write = ::IO.pipe()
+        end
+        if stderr == :pipe
+          err_read, err_write = ::IO.pipe()
+        end
+
         if duplex?
           reader, writer = ::IO.pipe
         end
 
         @pid = fork {
+          if not out_write.nil?
+            out_read.close()
+            stdout = out_write
+          end
+          if not err_write.nil?
+            err_read.close()
+            stderr = err_write
+          end
           STDOUT.reopen(stdout || "/dev/null")
           STDERR.reopen(stderr || "/dev/null")
 
@@ -97,9 +112,20 @@ module ChildProcess
           reader.close
         end
 
+        if not out_read.nil?
+          io._stdout = out_read
+          out_write.close()
+        end
+        if not err_read.nil?
+          io._stderr = err_read
+          err_write.close()
+        end
+
         ::Process.detach(@pid) if detach?
       end
 
     end # Process
   end # Unix
 end # ChildProcess
+
+# vim: set sts=2 sw=2 et:

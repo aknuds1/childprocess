@@ -1,1 +1,2 @@
 * Test whitespace arguments on Unix
+* Implement pipe support for other platforms than Unix and Windows
