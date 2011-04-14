@@ -23,15 +23,23 @@ describe ChildProcess do
     process.should_not be_crashed
   end
 
-  it "escalates if TERM is ignored" do
-    process = ignored('TERM').start
-    process.stop
-    process.should be_exited
-  end
+  describe "#stop" do
+    it "escalates if TERM is ignored" do
+      process = ignored('TERM').start
+      process.stop
+      process.should be_exited
+    end
 
-  it "accepts a timeout argument to #stop" do
-    process = sleeping_ruby.start
-    process.stop(EXIT_TIMEOUT)
+    it "accepts a timeout argument" do
+      process = sleeping_ruby.start
+      process.stop(EXIT_TIMEOUT)
+    end
+
+    it "is tolerant of being called several times" do
+      process = exit_with(0).start
+      stop_process()
+      stop_process()
+    end
   end
 
   it "lets child process inherit the environment of the current process" do
@@ -142,3 +150,5 @@ describe ChildProcess do
   end
 
 end
+
+# vim: set sts=2 sw=2 et:
