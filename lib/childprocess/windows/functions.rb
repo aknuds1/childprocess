@@ -144,7 +144,7 @@ module ChildProcess
 
       def self.pipe2io(this_pipe, other_pipe, mode)
         pipe_io = io_for(duplicate_handle(this_pipe), mode == :read ?
-                         File::RDONLY : 0)
+                         File::RDONLY : File::WRONLY)
         close_handle this_pipe
         close_handle other_pipe
         return pipe_io
