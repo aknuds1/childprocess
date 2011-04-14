@@ -20,16 +20,17 @@ module ChildProcessSpecHelper
     timeout = kwds.fetch(:timeout, EXIT_TIMEOUT)
     fail_on_error = kwds.fetch(:fail_on_error, true)
 
-    exitcode = @process.poll_for_exit(timeout)
-    if fail_on_error and exitcode != 0
-      msg = "Process failed"
-      if not @process.io.stderr.nil?
-        msg += ": #{@process.io.stderr.read()}"
-      end
-      raise RuntimeError, msg
+    exit_code = @process.poll_for_exit(timeout)
+    if fail_on_error
+      check_exit_code(exit_code)
     end
+    return exit_code
+  end
 
-    return exitcode
+  def stop_process(kwds={})
+    timeout = kwds.fetch(:timeout, EXIT_TIMEOUT)
+
+    @process.stop(timeout)
   end
 
   def sleeping_ruby
@@ -110,6 +111,17 @@ module ChildProcessSpecHelper
 
   def ruby(code)
     ruby_process(tmp_script(code))
+  end
+
+  # Verify that process exited cleanly
+  def check_exit_code(exit_code)
+    if exit_code != 0
+      msg = "Process failed with code #{exit_code}"
+      if not @process.io.stderr.nil?
+        msg += ": #{@process.io.stderr.read()}"
+      end
+      raise RuntimeError, msg
+    end
   end
 
 end # ChildProcessSpecHelper

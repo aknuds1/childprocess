@@ -15,7 +15,16 @@ module ChildProcess
 
         # just kill right away on windows.
         log "sending KILL"
-        @handle.send(WIN_SIGKILL)
+        begin
+          @handle.send(WIN_SIGKILL)
+        rescue
+          if exited?
+            log "process has already exited"
+            return
+          else
+            raise
+          end
+        end
 
         poll_for_exit(timeout)
       ensure
