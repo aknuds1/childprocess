@@ -16,8 +16,20 @@ module ChildProcessSpecHelper
   end
 
   # Wait on process using poll_for_exit
-  def wait_on_process(timeout=EXIT_TIMEOUT)
-      return @process.poll_for_exit(timeout)
+  def wait_on_process(kwds={})
+    timeout = kwds.fetch(:timeout, EXIT_TIMEOUT)
+    fail_on_error = kwds.fetch(:fail_on_error, true)
+
+    exitcode = @process.poll_for_exit(timeout)
+    if fail_on_error and exitcode != 0
+      msg = "Process failed"
+      if not @process.io.stderr.nil?
+        msg += ": #{@process.io.stderr.read()}"
+      end
+      raise RuntimeError, msg
+    end
+
+    return exitcode
   end
 
   def sleeping_ruby
@@ -110,3 +122,5 @@ RSpec.configure do |config|
     @process && @process.alive? && @process.stop
   }
 end
+
+# vim: set sts=2 sw=2 et:

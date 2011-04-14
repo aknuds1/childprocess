@@ -178,7 +178,7 @@ describe ChildProcess do
   describe "#poll_for_exit" do
     it "raises TimeoutError upon timeout" do
       process = sleeping_ruby.start
-      expect { wait_on_process(0.1) }.to raise_error(ChildProcess::TimeoutError)
+      expect { wait_on_process(:timeout=>0.1) }.to raise_error(ChildProcess::TimeoutError)
     end
   end
 
